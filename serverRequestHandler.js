@@ -19,6 +19,11 @@ function processMsg(msgObj_, callback_) {
         queryVm(msgObj_['content'], callback_);
       }
       break;
+    case 'queryRole':
+      {
+        queryRole(callback_);
+      }
+      break;
     default:
       {
         console.log("this is in default switch on datammmm:" + JSON.stringify(msgObj_));
@@ -30,7 +35,7 @@ exports.processMsg = processMsg;
 
 function authUser(msgObj_, callback_) {
   var rstObj = {};
-  DBDao.authUser(msgObj_['userName'], msgObj_['password'], function(err_, rst_) {
+  DBDao.authUser(msgObj_['userName'], msgObj_['password'], msgObj_['role'], function(err_, rst_) {
     if (err_) {
       rstObj['info'] = 'error';
       rstObj['desc'] = err_;
@@ -41,7 +46,6 @@ function authUser(msgObj_, callback_) {
         rstObj['auth'] = 'failed';
         callback_(rstObj);
       } else {
-        console.log(rst_)
         rstObj['info'] = 'ok';
         rstObj['auth'] = 'success';
         var userData = {};
@@ -95,7 +99,7 @@ function queryUser(msgObj_, callback_) {
         vmData['ip'] = item['ip'];
         vmMap.push(vmData);
       }
-      userData['vm'] = vmMap;
+      userData['vmMap'] = vmMap;
       callback_(rstObj);
     }
   });
@@ -118,6 +122,25 @@ function queryVm(msgObj_, callback_) {
         vmData['ip'] = rst_[0]['ip'];
       }
       rstObj['vm'] = vmData;
+      callback_(rstObj);
+    }
+  });
+}
+
+function queryRole(callback_) {
+  var rstObj = {};
+  DBDao.getRoles(function(err_, rst_) {
+    if (err_) {
+      rstObj['info'] = 'error';
+      rstObj['desc'] = err_;
+      callback_(rstObj);
+    } else {
+      rstObj['info'] = 'ok';
+      var roleData = [];
+      for(var i =0;i<rst_.length;i++){
+        roleData.push(rst_[i]['roleName']);
+      }
+      rstObj['roles'] = roleData;
       callback_(rstObj);
     }
   });

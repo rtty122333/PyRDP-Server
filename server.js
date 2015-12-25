@@ -16,7 +16,7 @@ function startServer() {
         c.on('data', function(data) {
             decryData(data, function(err_, msgObj_) {
                 if (err_) {
-                    console.log('decry data error ' + e);
+                    console.log('decry data error ' + err_);
                     return;
                 } else {
                     if (isInvalid(msgObj_)) {
@@ -44,7 +44,6 @@ exports.startServer = startServer;
 function sendMsg(c_, rstObj_) {
     var msg = '';
     encryData(rstObj_,function (err_,msg_) {
-        console.log(msg_)
         if(err_){
             console.log('encry data error '+err_);
             return;
@@ -80,7 +79,6 @@ function decryData(data_, callback_) {
         // dec += decipher.final('utf8');
         // var msgObj = JSON.parse(dec);
         // callback_(null, msgObj);
-
         var msgObj = JSON.parse(data_);
         callback_(null, msgObj);
     } catch (e) {

@@ -21,13 +21,13 @@ var options = {
 };
 var pool = mysql.createPool(options);
 
-exports.authUser = function(userName, password, callback) {
+exports.authUser = function(userName, password, roleName,callback) {
   pool.getConnection(function(err, connection) {
     if (err) {
       console.log('DB-获取数据库连接异常！' + err);
       callback(err, null);
     } else {
-      connection.query(SQLSTR.AUTHUSER, [userName, password], function(err, result) {
+      connection.query(SQLSTR.AUTHUSERROLE, [userName, password,roleName], function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
@@ -112,6 +112,27 @@ exports.saveRole = function(roleName, callback) {
       callback(err, null);
     } else {
       connection.query(SQLSTR.SAVEROLE, [roleName, new Date().getTime(), new Date().getTime()], function(err, result) {
+        if (err) {
+          connection.rollback(function() {
+            console.log('DB-获取数据异常！' + err);
+            connection.release();
+            callback(true, err);
+          });
+        } else {
+          connection.release();
+          callback(false, result);
+        }
+      });
+    }
+  });
+}
+exports.getRoles=function(callback){
+  pool.getConnection(function(err, connection) {
+    if (err) {
+      console.log('DB-获取数据库连接异常！' + err);
+      callback(err, null);
+    } else {
+      connection.query(SQLSTR.GETALLROLES, function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
