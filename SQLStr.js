@@ -15,7 +15,7 @@ exports.DELETEVMFORROLE="delete from roleVm where vmId=? and roleId=(select id f
 exports.AUTHUSER="select * from user where userName=? and password=?";
 exports.AUTHUSERROLE="select * from user where userName=? and password=? and roleId =(select id from role where roleName=?)";
 exports.GETUSERROLE="select roleName from role,user where user.roleId=role.id and user.userName=?";
-exports.GETUSERVMS="select vm.vmId,vmName,ip,vm.createTime,vm.lastModifyTime from vm,user,roleVm where user.username=? and user.roleId=roleVm.roleId and vm.id=roleVm.vmId";
-exports.GETROLEVMS="select vm.vmId,vmName,ip,vm.createTime,vm.lastModifyTime from vm,roleVm where roleVm.roleId=? and roleVm.roleId=vm.id";
+exports.GETUSERVMS="select vm.vmId,vm.userName,vmName,ip,vm.createTime,vm.lastModifyTime from vm,user,roleVm where user.username=? and user.roleId=roleVm.roleId and vm.id=roleVm.vmId";
+exports.GETROLEVMS="select vm.vmId,vm.userName,vmName,ip,vm.createTime,vm.lastModifyTime from roleVm,vm where roleVm.roleId=? and roleVm.vmId=vm.id";
 exports.GETVM="select * from vm where vmId=?"
 exports.GETALLROLES="select roleName from role";
