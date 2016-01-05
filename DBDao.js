@@ -245,7 +245,7 @@ exports.getRoles=function(callback){
       console.log('DB-获取数据库连接异常！' + err);
       callback(err, null);
     } else {
-      connection.query("select * from user where roleId=2", function(err, result) {
+      connection.query(SQLSTR.GETALLROLES, function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
