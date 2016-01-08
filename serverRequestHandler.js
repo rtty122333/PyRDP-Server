@@ -462,18 +462,20 @@ function removeUserVmCb(err_, rst_,state_,time_,callback_) {
     callback_(rstObj);
   } else {
     rstObj['info'] = 'ok';
-    var content = {};
-    content['state'] = state_;
-    content['stateTime'] = time_;
-    rstObj['content'] = content;
+    if(state_!=null){
+      var content = {};
+      content['state'] = state_;
+      content['stateTime'] = time_;
+      rstObj['content'] = content;
+    }
     callback_(rstObj);
   }
 }
 
 function removeUserVm(msgObj_, callback_){
   if(msgObj_['state']==4){
-    DBDao.recoveryVm(msgObj_['vmId'],4,function(err_, rst_,state_,time_) {
-      removeUserVmCb(err_,rst_,state_,time_,callback_);    
+    DBDao.deleteVm(msgObj_['vmId'],4,function(err_, rst_,state_,time_) {
+      removeUserVmCb(err_,rst_,null,null,callback_);    
     });
   }else{
     DBDao.removeUserVm(msgObj_['vmId'],msgObj_['state'],msgObj_['userId'],function(err_, rst_,state_,time_) {

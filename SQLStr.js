@@ -34,6 +34,7 @@ exports.USERLOGOUT="update user set state=2,stateTime=? where userName=?";
 exports.REMOVEUSER="delete from user where userName=?";
 exports.REMOVEROLE="delete from role where roleName=?";
 exports.REMOVEVMBYID="delete from vm where vmId=?";
+exports.REMOVEVM="delete from vm where vmId=? and state=?"
 
 
 //select

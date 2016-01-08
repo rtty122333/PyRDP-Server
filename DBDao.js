@@ -114,14 +114,13 @@ exports.removeUserVm = function(vmId,fromState,userId,callback){
   });
 }
 
-exports.recoveryVm = function(vmId,fromState,callback){
+exports.deleteVm = function(vmId,fromState,callback){
   pool.getConnection(function(err, connection) {
     if (err) {
       console.log('DB-获取数据库连接异常！' + err);
       callback(err, null);
     } else {
-      var time=new Date().getTime();
-      connection.query(SQLSTR.RECOVERYVM, [time,vmId,fromState], function(err, result) {
+      connection.query(SQLSTR.REMOVEVM, [vmId,fromState], function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
@@ -130,7 +129,7 @@ exports.recoveryVm = function(vmId,fromState,callback){
           });
         } else {
           connection.release();
-          callback(false, result,0,time);
+          callback(false, result);
         }
       });
     }
