@@ -14,6 +14,11 @@ function processMsg(msgObj_, callback_) {
         queryUser(msgObj_['content'], callback_);
       }
       break;
+    case 'queryUserInfo':
+      {
+        queryUserInfo(msgObj_['content'], callback_);
+      }
+      break;
     case 'queryVm':
       {
         queryVm(msgObj_['content'], callback_);
@@ -70,9 +75,10 @@ function authUser(msgObj_, callback_) {
         rstObj['info'] = 'ok';
         rstObj['auth'] = 'success';
         var userData = {};
-        rstObj['user'] = userData;
+        rstObj['content'] = userData;
         userData['userName'] = rst_[0]['userName'];
         userData['userState'] = rst_[0]['state'];
+        userData['stateTime'] = rst_[0]['stateTime'];
         getVmsByRoleOrUser(rst_[0]['roleId'],rst_[0]['id'],function(err_,vms_){
           if(err_){
             userData['vmState'] = 'error';
@@ -117,9 +123,10 @@ function queryUser(msgObj_, callback_) {
           } else {
             rstObj['info'] = 'ok';
             userData = {};
-            rstObj['user'] = userData;
+            rstObj['content'] = userData;
             userData['userName'] = msgObj_['userName'];
             userData['userState'] = rst_[0]['state'];
+            userData['stateTime'] = rst_[0]['stateTime'];
             userData['vmMap'] = vms_;
             callback_(rstObj);
           }
@@ -127,6 +134,117 @@ function queryUser(msgObj_, callback_) {
       }
     }
   });
+}
+
+function queryUserInfo(msgObj_, callback_) {
+  var rstObj = {};
+  var userId = msgObj_['userId'];
+  switch (userId) {
+    case -1:
+      {
+        DBDao.getVmsByState(4, function(err_, vmRst_) {
+          if (err_) {
+            rstObj['info'] = 'error';
+            rstObj['desc'] = 'get recovery info error.'
+            rstObj['error'] = err_;
+            callback_(rstObj);
+          } else {
+            rstObj['info'] = 'ok';
+            userData = {};
+            rstObj['content'] = userData;
+            userData['userId'] = -1;
+            userData['userName'] = '回收中';
+            userData['userState'] = 0;
+            userData['stateTime'] = new Date().getTime();
+            vmMap = [];
+            for (var i = 0; i < vmRst_.length; i++) {
+              var vmData = {};
+              var item = vmRst_[i];
+              vmData['vmId'] = item['vmId'];
+              vmData['userName'] = item['userName'];
+              vmData['vmName'] = item['vmName'];
+              vmData['ip'] = item['ip'];
+              vmData['state'] = item['state'];
+              vmData['stateTime'] = item['stateTime'];
+              vmMap.push(vmData);
+            }
+            userData['vmMap'] = vmMap;
+            callback_(rstObj);
+          }
+        });
+      }
+      break;
+    case 0:
+      {
+        DBDao.getVmsUndistributed(function(err_, vmRst_) {
+          if (err_) {
+            rstObj['info'] = 'error';
+            rstObj['desc'] = 'get undistributed info error.'
+            rstObj['error'] = err_;
+            callback_(rstObj);
+          } else {
+            rstObj['info'] = 'ok';
+            userData = {};
+            rstObj['content'] = userData;
+            userData['userId'] = 0;
+            userData['userName'] = '未分配';
+            userData['userState'] = 0;
+            userData['stateTime'] = new Date().getTime();
+            vmMap = [];
+            for (var i = 0; i < vmRst_.length; i++) {
+              var vmData = {};
+              var item = vmRst_[i];
+              vmData['vmId'] = item['vmId'];
+              vmData['userName'] = item['userName'];
+              vmData['vmName'] = item['vmName'];
+              vmData['ip'] = item['ip'];
+              vmData['state'] = item['state'];
+              vmData['stateTime'] = item['stateTime'];
+              vmMap.push(vmData);
+            }
+            userData['vmMap'] = vmMap;
+            callback_(rstObj);
+          }
+        });
+      }
+      break;
+    default:
+      {
+        DBDao.getUserById(msgObj_['userId'], function(err_, rst_) {
+          if (err_) {
+            rstObj['info'] = 'error';
+            rstObj['desc'] = 'get user info error.'
+            rstObj['error'] = err_;
+            callback_(rstObj);
+          } else {
+            if (rst_.length == 0) {
+              rstObj['info'] = 'error';
+              rstObj['desc'] = 'no such a userid';
+              callback_(rstObj);
+            } else {
+              getVmsByRoleOrUser(rst_[0]['roleId'], rst_[0]['id'], function(err_, vms_) {
+                if (err_) {
+                  rstObj['info'] = 'error';
+                  rstObj['desc'] = 'get vms for user error.';
+                  rstObj['error'] = err_;
+                  callback_(rstObj);
+                } else {
+                  rstObj['info'] = 'ok';
+                  userData = {};
+                  rstObj['content'] = userData;
+                  userData['userId'] = rst_[0]['id'];
+                  userData['userName'] = rst_[0]['userName'];
+                  userData['userState'] = rst_[0]['state'];
+                  userData['stateTime'] = rst_[0]['stateTime'];
+                  userData['vmMap'] = vms_;
+                  callback_(rstObj);
+                }
+              });
+            }
+          }
+        });
+      }
+  }
 }
 
 function getVmsByRoleOrUser(roleId_, userId_, callback_) {
@@ -144,8 +262,17 @@ function getVmsByRoleOrUser(roleId_, userId_, callback_) {
               var vmUserItem = {};
               vmUserItem['userId'] = 0;
               vmUserItem['userName'] = '未分配';
+              vmUserItem['userState'] = 0;
+              vmUserItem['stateTime'] = new Date().getTime();
               vmUserItem['vmMap']=[];
               vmUserMap[0] = vmUserItem;
+              var vmUserItem = {};
+              vmUserItem['userId'] = -1;
+              vmUserItem['userName'] = '回收中';
+              vmUserItem['userState'] = 0;
+              vmUserItem['stateTime'] = new Date().getTime();
+              vmUserItem['vmMap']=[];
+              vmUserMap[-1] = vmUserItem;
               for (var i = 0; i < userRst_.length; i++) {
                 var vmUserItem = {};
                 var userItem=userRst_[i];
@@ -163,10 +290,11 @@ function getVmsByRoleOrUser(roleId_, userId_, callback_) {
                 vmData['userName'] = item['userName'];
                 vmData['vmName'] = item['vmName'];
                 vmData['ip'] = item['ip'];
-                vmData['state']=item['state']
-                vmData['stateTime']=item['stateTime']
+                vmData['state']=item['state'];
+                vmData['stateTime']=item['stateTime'];
                 var userId = item['userId'];
                 userId = userId == null ? 0 : userId;
+                userId=item['state']==4?-1:userId;
                 vmUserMap[userId]['vmMap'].push(vmData);
               }
               callback_(null, vmUserMap);
@@ -214,8 +342,10 @@ function queryVm(msgObj_, callback_) {
         vmData['userName'] = rst_[0]['userName'];
         vmData['vmName'] = rst_[0]['vmName'];
         vmData['ip'] = rst_[0]['ip'];
+        vmData['state'] = rst_[0]['state'];
+        vmData['stateTime'] = rst_[0]['stateTime'];
       }
-      rstObj['vm'] = vmData;
+      rstObj['content'] = vmData;
       callback_(rstObj);
     }
   });
@@ -235,7 +365,7 @@ function queryRole(callback_) {
       for(var i =0;i<rst_.length;i++){
         roleData.push(rst_[i]['roleName']);
       }
-      rstObj['roles'] = roleData;
+      rstObj['content'] = roleData;
       callback_(rstObj);
     }
   });
@@ -255,7 +385,7 @@ function addUser(msgObj_, callback_){
         rstObj['desc'] = 'no such a role';
         callback_(rstObj);
       }else{
-        DBDao.addUser(msgObj_['userName'],msgObj_['password'],rst_[0]['id'],function(err_, rst_,state,time) {
+        DBDao.addUser(msgObj_['userName'],msgObj_['password'],rst_[0]['id'],function(err_, rst_,state_,time_) {
           if (err_) {
             rstObj['info'] = 'error';
             rstObj['desc'] = 'add user error.';
@@ -266,8 +396,8 @@ function addUser(msgObj_, callback_){
             var content={};
             content['userId']=rst_['insertId'];
             content['userName']=msgObj_['userName'];
-            content['userState']=state;
-            content['stateTime']=time;
+            content['userState']=state_;
+            content['stateTime']=time_;
             rstObj['content']=content;
             callback_(rstObj);
           }
@@ -279,7 +409,7 @@ function addUser(msgObj_, callback_){
 
 function addVm(msgObj_, callback_) {
   var rstObj = {};
-  DBDao.addVm(msgObj_['vmId'], msgObj_['userName'], msgObj_['vmName'], msgObj_['ip'], function(err_, rst_,state,time) {
+  DBDao.addVm(msgObj_['vmId'], msgObj_['userName'], msgObj_['vmName'], msgObj_['ip'], function(err_, rst_,state_,time_) {
     if (err_) {
       rstObj['info'] = 'error';
       rstObj['desc'] = 'add vm error.';
@@ -293,8 +423,8 @@ function addVm(msgObj_, callback_) {
       content['userName'] =  msgObj_['userName'];
       content['vmName'] = msgObj_['vmName'];
       content['ip'] = msgObj_['ip'];
-      content['state'] = state;
-      content['stateTime'] = time;
+      content['state'] = state_;
+      content['stateTime'] = time_;
       rstObj['content'] = content;
       callback_(rstObj);
     }
@@ -303,7 +433,7 @@ function addVm(msgObj_, callback_) {
 
 function addUserVm(msgObj_, callback_){
   var rstObj = {};
-  DBDao.addUserVm(msgObj_['userName'],msgObj_['vmId'],function(err_, rst_) {
+  DBDao.addUserVm(msgObj_['userId'],msgObj_['vmId'],function(err_, rst_,state_,time_) {
     if (err_) {
       rstObj['info'] = 'error';
       rstObj['desc'] = 'add vm for user error.';
@@ -311,22 +441,43 @@ function addUserVm(msgObj_, callback_){
       callback_(rstObj);
     } else {
       rstObj['info'] = 'ok';
+      var content = {};
+      content['state'] = state_;
+      content['stateTime'] = time_;
+      rstObj['content'] = content;
       callback_(rstObj);
     }
   });
 }
+function removeUserVmCb(err_, rst_,state_,time_,callback_) {
+  var rstObj = {};
+  if (err_) {
+    rstObj['info'] = 'error';
+    rstObj['desc'] = 'remove vm for user error.';
+    rstObj['error'] = err_;
+    callback_(rstObj);
+  } else if (rst_['affectedRows'] == 0) {
+    rstObj['info'] = 'error';
+    rstObj['desc'] = '移除失败，请刷新后重试.';
+    callback_(rstObj);
+  } else {
+    rstObj['info'] = 'ok';
+    var content = {};
+    content['state'] = state_;
+    content['stateTime'] = time_;
+    rstObj['content'] = content;
+    callback_(rstObj);
+  }
+}
 
 function removeUserVm(msgObj_, callback_){
-  var rstObj = {};
-  DBDao.removeUserVm(msgObj_['vmId'],function(err_, rst_) {
-    if (err_) {
-      rstObj['info'] = 'error';
-      rstObj['desc'] = 'remove vm for user error.';
-      rstObj['error'] = err_;
-      callback_(rstObj);
-    } else {
-      rstObj['info'] = 'ok';
-      callback_(rstObj);
-    }
-  });
+  if(msgObj_['state']==4){
+    DBDao.recoveryVm(msgObj_['vmId'],4,function(err_, rst_,state_,time_) {
+      removeUserVmCb(err_,rst_,state_,time_,callback_);    
+    });
+  }else{
+    DBDao.removeUserVm(msgObj_['vmId'],msgObj_['state'],msgObj_['userId'],function(err_, rst_,state_,time_) {
+      removeUserVmCb(err_,rst_,state_,time_,callback_);
+    });
+  } 
 }

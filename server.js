@@ -48,7 +48,7 @@ function sendMsg(c_, rstObj_) {
             console.log('encry data error '+err_);
             return;
         }else{
-            console.log('reply:'+msg_)
+            // console.log('reply:'+msg_)
             c_.write(msg_);
         }
     });

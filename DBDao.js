@@ -28,7 +28,8 @@ exports.addUser = function(userName,password,roleId,callback){
       console.log('DB-获取数据库连接异常！' + err);
       callback(err, null);
     } else {
-      connection.query(SQLSTR.SAVEUSER, [userName,password,roleId,0,new Date().getTime(),new Date().getTime(), new Date().getTime()], function(err, result) {
+      var time=new Date().getTime();
+      connection.query(SQLSTR.SAVEUSER, [userName,password,roleId,0,time,time, time], function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
@@ -37,7 +38,7 @@ exports.addUser = function(userName,password,roleId,callback){
           });
         } else {
           connection.release();
-          callback(false, result,0,new Date().getTime());
+          callback(false, result,0,time);
         }
       });
     }
@@ -50,7 +51,8 @@ exports.addVm = function(vmId,userName,vmName,ip,callback){
       console.log('DB-获取数据库连接异常！' + err);
       callback(err, null);
     } else {
-      connection.query(SQLSTR.SAVEVM, [vmId,userName,vmName,ip,0,new Date().getTime(),null,new Date().getTime(), new Date().getTime()], function(err, result) {
+      var time=new Date().getTime();
+      connection.query(SQLSTR.SAVEVM, [vmId,userName,vmName,ip,0,time,null,time, time], function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
@@ -59,20 +61,21 @@ exports.addVm = function(vmId,userName,vmName,ip,callback){
           });
         } else {
           connection.release();
-          callback(false, result,0,new Date().getTime());
+          callback(false, result,0,time);
         }
       });
     }
   });
 }
 
-exports.addUserVm = function(userName,vmId,callback){
+exports.addUserVm = function(userId,vmId,callback){
   pool.getConnection(function(err, connection) {
     if (err) {
       console.log('DB-获取数据库连接异常！' + err);
       callback(err, null);
     } else {
-      connection.query(SQLSTR.ADDUSERVM, [new Date().getTime(),userName,vmId], function(err, result) {
+      var time=new Date().getTime();
+      connection.query(SQLSTR.ADDUSERVM, [time,userId,vmId], function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
@@ -81,20 +84,21 @@ exports.addUserVm = function(userName,vmId,callback){
           });
         } else {
           connection.release();
-          callback(false, result);
+          callback(false, result,1,time);
         }
       });
     }
   });
 }
 
-exports.removeUserVm = function(vmId,callback){
+exports.removeUserVm = function(vmId,fromState,userId,callback){
   pool.getConnection(function(err, connection) {
     if (err) {
       console.log('DB-获取数据库连接异常！' + err);
       callback(err, null);
     } else {
-      connection.query(SQLSTR.REMOVEUSERVM, [new Date().getTime(),vmId], function(err, result) {
+      var time=new Date().getTime();
+      connection.query(SQLSTR.REMOVEUSERVM, [time,vmId,userId,fromState], function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
@@ -103,7 +107,30 @@ exports.removeUserVm = function(vmId,callback){
           });
         } else {
           connection.release();
-          callback(false, result);
+          callback(false, result,4,time);
+        }
+      });
+    }
+  });
+}
+
+exports.recoveryVm = function(vmId,fromState,callback){
+  pool.getConnection(function(err, connection) {
+    if (err) {
+      console.log('DB-获取数据库连接异常！' + err);
+      callback(err, null);
+    } else {
+      var time=new Date().getTime();
+      connection.query(SQLSTR.RECOVERYVM, [time,vmId,fromState], function(err, result) {
+        if (err) {
+          connection.rollback(function() {
+            console.log('DB-获取数据异常！' + err);
+            connection.release();
+            callback(err, null);
+          });
+        } else {
+          connection.release();
+          callback(false, result,0,time);
         }
       });
     }
@@ -154,27 +181,6 @@ exports.getUserById = function(userId, callback) {
   });
 }
 
-exports.getVmsByUserName = function(userName, callback) {
-  pool.getConnection(function(err, connection) {
-    if (err) {
-      console.log('DB-获取数据库连接异常！' + err);
-      callback(err, null);
-    } else {
-      connection.query(SQLSTR.GETVMSBYUSERNAME, userName, function(err, result) {
-        if (err) {
-          connection.rollback(function() {
-            console.log('DB-获取数据异常！' + err);
-            connection.release();
-            callback(err, null);
-          });
-        } else {
-          connection.release();
-          callback(null, result);
-        }
-      });
-    }
-  });
-}
 
 exports.getVmsByUserId = function(userId, callback) {
   pool.getConnection(function(err, connection) {
@@ -218,27 +224,7 @@ exports.getVmByVmId = function(vmId, callback) {
     }
   });
 }
-exports.saveRole = function(roleName, callback) {
-  pool.getConnection(function(err, connection) {
-    if (err) {
-      console.log('DB-获取数据库连接异常！' + err);
-      callback(err, null);
-    } else {
-      connection.query(SQLSTR.SAVEROLE, [roleName, new Date().getTime(), new Date().getTime()], function(err, result) {
-        if (err) {
-          connection.rollback(function() {
-            console.log('DB-获取数据异常！' + err);
-            connection.release();
-            callback(err, null);
-          });
-        } else {
-          connection.release();
-          callback(false, result);
-        }
-      });
-    }
-  });
-}
+
 exports.getRoles=function(callback){
   pool.getConnection(function(err, connection) {
     if (err) {
@@ -246,29 +232,6 @@ exports.getRoles=function(callback){
       callback(err, null);
     } else {
       connection.query(SQLSTR.GETALLROLES, function(err, result) {
-        if (err) {
-          connection.rollback(function() {
-            console.log('DB-获取数据异常！' + err);
-            connection.release();
-            callback(err, null);
-          });
-        } else {
-          connection.release();
-          callback(false, result);
-        }
-      });
-    }
-  });
-}
-
-
-exports.getRoleByUserName=function(userName,callback){
-  pool.getConnection(function(err, connection) {
-    if (err) {
-      console.log('DB-获取数据库连接异常！' + err);
-      callback(err, null);
-    } else {
-      connection.query(SQLSTR.GETROLEBYUSER, userName,function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
@@ -445,6 +408,28 @@ exports.getNormalUsers=function(callback){
       callback(err, null);
     } else {
       connection.query(SQLSTR.GETNORMALUSERS, function(err, result) {
+        if (err) {
+          connection.rollback(function() {
+            console.log('DB-获取数据异常！' + err);
+            connection.release();
+            callback(err, null);
+          });
+        } else {
+          connection.release();
+          callback(false, result);
+        }
+      });
+    }
+  });
+}
+
+exports.getVmsByState=function(state,callback){
+  pool.getConnection(function(err, connection) {
+    if (err) {
+      console.log('DB-获取数据库连接异常！' + err);
+      callback(err, null);
+    } else {
+      connection.query(SQLSTR.GETVMSBYSTATE,state, function(err, result) {
         if (err) {
           connection.rollback(function() {
             console.log('DB-获取数据异常！' + err);
