@@ -48,7 +48,7 @@ function sendMsg(c_, rstObj_) {
             console.log('encry data error '+err_);
             return;
         }else{
-            console.log('reply:'+msg_)
+            // console.log('reply:'+msg_)
             c_.write(msg_);
         }
     });
@@ -80,7 +80,7 @@ function decryData(data_, callback_) {
         // dec += decipher.final('utf8');
         // var msgObj = JSON.parse(dec);
         // callback_(null, msgObj);
-        console.log('request--'+data_)
+        // console.log('request--'+data_)
         var msgObj = JSON.parse(data_);
         callback_(null, msgObj);
     } catch (e) {
