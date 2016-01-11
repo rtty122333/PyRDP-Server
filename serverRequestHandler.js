@@ -9,6 +9,22 @@ function processMsg(msgObj_, callback_) {
         authUser(msgObj_['content'], callback_);
       }
       break;
+    case 'logout':
+      {
+        userLogout(msgObj_['content'], callback_);
+      }
+      break;
+
+    case 'userConn':
+      {
+        userConnVm(msgObj_['content'], callback_);
+      }
+      break;
+    case 'userDisConn':
+      {
+        userDisConnVm(msgObj_['content'], callback_);
+      }
+      break;
     case 'queryUser':
       {
         queryUser(msgObj_['content'], callback_);
@@ -72,30 +88,102 @@ function authUser(msgObj_, callback_) {
         rstObj['auth'] = 'failed';
         callback_(rstObj);
       } else {
-        rstObj['info'] = 'ok';
         rstObj['auth'] = 'success';
         var userData = {};
         rstObj['content'] = userData;
         userData['userName'] = rst_[0]['userName'];
-        userData['userState'] = rst_[0]['state'];
-        userData['stateTime'] = rst_[0]['stateTime'];
-        getVmsByRoleOrUser(rst_[0]['roleId'],rst_[0]['id'],function(err_,vms_){
-          if(err_){
-            userData['vmState'] = 'error';
-            userData['desc'] = 'get vms for user error.';
-            userData['error'] = err_;
+        DBDao.userLoginState(rst_[0]['id'],function(err_,result_,state_,time_){
+          if(err_||result_['affectedRows']==0){
+            console.log('user login stateSet error '+err_);
+            rstObj['info'] = 'error';
+            rstObj['desc'] = 'login user info update error.';
+            rstObj['error'] = err_;
             callback_(rstObj);
-          }else{
-            userData['vmMap'] = vms_;
-            callback_(rstObj);
+          }else {
+            rstObj['info'] = 'ok';
+            userData['userId'] = rst_[0]['id'];
+            userData['userState'] = state_;
+            userData['stateTime'] = time_;
+            console.log('user login!')
+            getVmsByRoleOrUser(rst_[0]['roleId'],rst_[0]['id'],function(err_,vms_){
+              if(err_){
+                userData['vmState'] = 'error';
+                userData['desc'] = 'get vms for user error.';
+                userData['error'] = err_;
+                callback_(rstObj);
+              }else{
+                userData['vmMap'] = vms_;
+                callback_(rstObj);
+              }
+            });
           }
         });
-        DBDao.addUserLog(1,rst_[0]['id'],msgObj_['ip'], function(err_, rst_) {
-          if (err_) {
-            console.log('login sys log failed '+msgObj_['userName'])
-          }
-        });
+        
+        // DBDao.addUserLog(1,rst_[0]['id'],msgObj_['ip'], function(err_, rst_) {
+        //   if (err_) {
+        //     console.log('login sys log failed '+msgObj_['userName'])
+        //   }
+        // });
       }
+    }
+  });
+}
+
+function userLogout(msgObj_, callback_){
+  var rstObj = {};
+  DBDao.userLogoutState(msgObj_['userId'],function(err_, rst_) {
+    if (err_) {
+      rstObj['info'] = 'error';
+      rstObj['desc'] = 'user logout stateSet error.';
+      rstObj['error'] = err_;
+      callback_(rstObj);
+    } else if(rst_['affectedRows']==0){
+      rstObj['info'] = 'error';
+      rstObj['desc']='update state for user logout error.';
+      rstObj['error'] = 'update state failed';
+      callback_(rstObj);
+    }else{
+      rstObj['info'] = 'ok';
+      callback_(rstObj);
+    }
+  });
+}
+
+function userConnVm(msgObj_, callback_){
+  var rstObj = {};
+  DBDao.userConnVmState(msgObj_['vmId'],function(err_, rst_) {
+    if (err_) {
+      rstObj['info'] = 'error';
+      rstObj['desc'] = 'user conn stateSet error.';
+      rstObj['error'] = err_;
+      callback_(rstObj);
+    } else if(rst_['affectedRows']==0){
+      rstObj['info'] = 'error';
+      rstObj['desc']='update state for user conn vm error.';
+      rstObj['error'] = 'update state failed';
+      callback_(rstObj);
+    }else{
+      rstObj['info'] = 'ok';
+      callback_(rstObj);
+    }
+  });
+}
+
+function userDisConnVm(msgObj_, callback_){
+  var rstObj = {};
+  DBDao.userDisConnVmState(msgObj_['vmId'],function(err_, rst_) {
+    if (err_) {
+      rstObj['info'] = 'error';
+      rstObj['desc'] = 'user disconn stateSet error.';
+      rstObj['error'] = err_;
+      callback_(rstObj);
+    } else if(rst['affectedRows']==0){
+      rstObj['info'] = 'error';
+      rstObj['desc']='update state for user disconn vm error.';
+      callback_(rstObj);
+    }else{
+      rstObj['info'] = 'ok';
+      callback_(rstObj);
     }
   });
 }
@@ -398,8 +486,17 @@ function addUser(msgObj_, callback_){
             content['userName']=msgObj_['userName'];
             content['userState']=state_;
             content['stateTime']=time_;
+            content['vmMap']=[];
             rstObj['content']=content;
             callback_(rstObj);
+            DBDao.userOrVmActionLog(7,msgObj_['adminId'],rst_['insertId'],msgObj_['adminIp'],function(err_, rst_) {
+              if (err_) {
+                console.log('add user log error');
+              } else {
+                console.log('add user log succeed');
+                
+              }
+            });
           }
         });
       }    
@@ -427,6 +524,13 @@ function addVm(msgObj_, callback_) {
       content['stateTime'] = time_;
       rstObj['content'] = content;
       callback_(rstObj);
+      DBDao.userOrVmActionLog(5,msgObj_['adminId'],rst_['insertId'],msgObj_['adminIp'],function(err_, rst_) {
+        if (err_) {
+          console.log('add vm log error');
+        } else {
+          console.log('add vm log succed');
+        }
+      });
     }
   });
 }
@@ -446,10 +550,24 @@ function addUserVm(msgObj_, callback_){
       content['stateTime'] = time_;
       rstObj['content'] = content;
       callback_(rstObj);
+      DBDao.getVmByVmId(msgObj_['vmId'],function(err_,rstVm_){
+        if(err_ || rstVm_.length==0){
+          console.log('get vm with id error while write adduservm log.')
+        }else{
+          DBDao.userVmActionLog(9,msgObj_['adminId'],msgObj_['userId'],rstVm_[0]['id'],msgObj_['adminIp'],function(err_, rst_) {
+            if (err_) {
+              console.log('add uservm log error');
+            } else {
+              console.log('add uservm log succeed');
+            }
+          }); 
+        }
+      });
     }
   });
 }
-function removeUserVmCb(err_, rst_,state_,time_,callback_) {
+
+function removeUserVmCb(err_, rst_,vm_,state_,time_,msgObj_,callback_) {
   var rstObj = {};
   if (err_) {
     rstObj['info'] = 'error';
@@ -467,19 +585,40 @@ function removeUserVmCb(err_, rst_,state_,time_,callback_) {
       content['state'] = state_;
       content['stateTime'] = time_;
       rstObj['content'] = content;
+      callback_(rstObj);
+      DBDao.userOrVmActionLog(6,msgObj_['adminId'],vm_['id'],msgObj_['adminIp'],function(err_, rst_) {
+        if (err_) {
+          console.log('remove vm log error');
+        } else {
+          console.log('remove vm log succeed');
+        }
+      });
+    }else{
+      DBDao.userVmActionLog(10,msgObj_['adminId'],msgObj_['userId'],vm_['id'],msgObj_['adminIp'],function(err_, rst_) {
+        if (err_) {
+          console.log('remove vm log error');
+        } else {
+          console.log('remove vm log succeed');
+        }
+      });
     }
-    callback_(rstObj);
   }
 }
 
 function removeUserVm(msgObj_, callback_){
-  if(msgObj_['state']==4){
-    DBDao.deleteVm(msgObj_['vmId'],4,function(err_, rst_,state_,time_) {
-      removeUserVmCb(err_,rst_,null,null,callback_);    
-    });
-  }else{
-    DBDao.removeUserVm(msgObj_['vmId'],msgObj_['state'],msgObj_['userId'],function(err_, rst_,state_,time_) {
-      removeUserVmCb(err_,rst_,state_,time_,callback_);
-    });
-  } 
+  DBDao.getVmByVmId(msgObj_['vmId'],function(err_,rstVm_){
+    if(err_ || rstVm_.length==0){
+      removeUserVmCb(err_, rstVm_,null,null,null,msgObj_,callback_)
+    }else{
+      if(msgObj_['state']==4){
+        DBDao.deleteVm(msgObj_['vmId'],4,function(err_, rst_,state_,time_) {
+          removeUserVmCb(err_,rst_,rstVm_[0],null,null,msgObj_,callback_);    
+        });
+      }else{
+        DBDao.removeUserVm(msgObj_['vmId'],msgObj_['state'],msgObj_['userId'],function(err_, rst_,state_,time_) {
+          removeUserVmCb(err_,rst_,rstVm_[0],state_,time_,msgObj_,callback_);
+        });
+      } 
+    }
+  });
 }

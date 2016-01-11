@@ -6,6 +6,8 @@ exports.SAVEUSERLOG="insert into userLog(type, userId,ip,actionTime) values (?,?
 exports.SAVEUSERCONN="insert into userConn(type, userId,vmId,ip,actionTime) values (?,?,?,?,?)";
 exports.SAVEUSERVMLOG="insert into userVmLog(type, userId,userVmId,ip,actionTime) values (?,?,?,?,?)";
 exports.SAVEUSERVMACTION="insert into userVmAction(type, userId,toUserId,vmId,ip,actionTime) values (?,?,?,?,?,?)";
+exports.USERORVMACTIONLOG="insert into userVmLog(type, userId,userVmId,ip,actionTime) values(?,?,?,?,?)";
+exports.USERVMACTIONLOG="insert into userVmAction(type, userId,toUserId,vmId,ip,actionTime) values(?,?,?,?,?,?)";
 
 //update
 // vm
@@ -18,8 +20,8 @@ exports.SAVEUSERVMACTION="insert into userVmAction(type, userId,toUserId,vmId,ip
 // exports.ADDUSERVM="update vm set state=1,stateTime=?,userId=(select id from user where userName=?) where vmId=?";
 exports.ADDUSERVM="update vm set state=1,stateTime=?,userId=? where vmId=?";
 exports.REMOVEUSERVM="update vm set state=4,stateTime=? where vmId=? and userId=? and state=?";
-exports.ADDUSERVMCONN="update vm set state=2,stateTime=? where vmId=?";
-exports.REMOVEUSERVMCONN="update vm set state=3,stateTime=? where vmId=?";
+exports.USERVMCONN="update vm set state=2,stateTime=? where vmId=?";
+exports.USERVMDISCONN="update vm set state=3,stateTime=? where vmId=?";
 exports.RECOVERYVM="update vm set state=0,stateTime=?,userId=null where vmId=? and state=?";
 
 //user
@@ -27,8 +29,8 @@ exports.RECOVERYVM="update vm set state=0,stateTime=?,userId=null where vmId=? a
 //	0-注册，stateTime:注册时间
 //  1-在线，stateTime:上线时间
 //  2-下线，stateTime:下线时间
-exports.USERLOGIN="update user set state=1,stateTime=? where userName=?";
-exports.USERLOGOUT="update user set state=2,stateTime=? where userName=?";
+exports.USERLOGIN="update user set state=1,stateTime=? where id=?";
+exports.USERLOGOUT="update user set state=2,stateTime=? where id=?";
 
 //remove
 exports.REMOVEUSER="delete from user where userName=?";
