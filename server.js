@@ -49,7 +49,7 @@ function sendMsg(c_, rstObj_) {
             return;
         }else{
             // console.log('reply:'+msg_)
-            c_.write(msg_);
+            c_.write(msg_+'|');
         }
     });
 }
