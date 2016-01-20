@@ -3,8 +3,8 @@ create database pyrdpserver default character set utf8;
 
 #id:1,roleName:管理员；id:2,roleName:普通用户
 CREATE TABLE pyrdpserver.role(id  INT PRIMARY KEY auto_increment, roleName varchar(32), createTime varchar(32), lastModifyTime varchar(32),unique(roleName)) default charset=utf8;
-INSERT INTO pyrdpserver.role(roleName ,createTime, lastModifyTime) VALUES('管理员', '1403507414000.0','1403507414000.0');
-INSERT INTO pyrdpserver.role(roleName ,createTime, lastModifyTime) VALUES('普通用户', '1403507414000.0','1403507414000.0');
+INSERT INTO pyrdpserver.role(roleName ,createTime, lastModifyTime) VALUES('admin', '1403507414000.0','1403507414000.0');
+INSERT INTO pyrdpserver.role(roleName ,createTime, lastModifyTime) VALUES('user', '1403507414000.0','1403507414000.0');
 
 
 ##state: 0-注册，1-在线，2-不在线; stateTime:对应上下线时间
