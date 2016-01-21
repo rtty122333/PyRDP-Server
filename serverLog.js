@@ -51,8 +51,9 @@ function sendUserLogLog(msgObj, action) {
   msg['param']['tenant_name'] = msgObj['role'];
   msg['param']['operation'] = action;
   msg['param']['client_ip'] = msgObj['ip'] + '(' + msgObj['mac']+')';
-  options['headers']['Content-Length'] = JSON.stringify(msg).length;
-  postLog(JSON.stringify(msg), options);
+  msg=JSON.stringify(msg);
+  options['headers']['Content-Length'] = msg.length;
+  postLog(msg, options);
 }
 exports.sendUserLogLog = sendUserLogLog;
 
@@ -64,7 +65,8 @@ function sendUserConnLog(msgObj, action) {
   msg['param']['tenant_name'] = msgObj['vmId'] + '(' + msgObj['vmName']+')';
   msg['param']['operation'] = action;
   msg['param']['client_ip'] = msgObj['ip'] + '(' + msgObj['mac']+')';
-  options['headers']['Content-Length'] = JSON.stringify(msg).length;
-  postLog(JSON.stringify(msg), options);
+  msg=JSON.stringify(msg);
+  options['headers']['Content-Length'] = msg.length;
+  postLog(msg, options);
 }
 exports.sendUserConnLog = sendUserConnLog;
