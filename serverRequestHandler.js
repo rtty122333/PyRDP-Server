@@ -1,4 +1,5 @@
-var DBDao = require('./DBDao');
+var DBDao = require('./DBDao'),
+  serverLog=require('./serverLog');
 
 
 
@@ -121,6 +122,7 @@ function authUser(msgObj_, callback_) {
                 console.log('login sys log failed '+msgObj_['userName'])
               }else console.log('login sys log succeed '+msgObj_['userName'])
             });
+            serverLog.sendUserLogLog(msgObj_,'login');
           }
         });
       }
@@ -149,6 +151,7 @@ function userLogout(msgObj_, callback_) {
           console.log('logout sys log failed ' + msgObj_['userName'])
         } else console.log('logout sys log succeed ' + msgObj_['userName'])
       });
+      serverLog.sendUserLogLog(msgObj_,'logout');
     }
   });
 }
@@ -174,6 +177,7 @@ function userConnVm(msgObj_, callback_){
           console.log('user conn log failed ' + msgObj_['userName'])
         } else console.log('user conn log succeed ' + msgObj_['userName'])
       });
+      serverLog.sendUserConnLog(msgObj_,'connVm');
     }
   });
 }
@@ -198,6 +202,7 @@ function userDisConnVm(msgObj_, callback_){
           console.log('user disconn log failed ' + msgObj_['userName'])
         } else console.log('user disconn log succeed ' + msgObj_['userName'])
       });
+      serverLog.sendUserConnLog(msgObj_,'disConnVm');
     }
   });
 }

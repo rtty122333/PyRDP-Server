@@ -1,5 +1,4 @@
 var net = require('net');
-var fs = require('fs');
 var DBDao = require('./DBDao');
 var serverRequetHandler = require('./serverRequestHandler');
 var crypto = require('crypto');
