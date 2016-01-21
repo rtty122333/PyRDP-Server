@@ -1,7 +1,17 @@
 var DBDao = require('./DBDao'),
   serverLog=require('./serverLog');
 
-
+// admin action
+// 1:登录
+// 2:登出
+// 3:连接
+// 4:断开
+// 5:添加虚拟机
+// 6:删除虚拟机
+// 7:添加用户
+// 8:删除用户
+// 9:添加用户虚拟机
+// 10:删除用户虚拟机
 
 function processMsg(msgObj_, callback_) {
   switch (msgObj_.type) {

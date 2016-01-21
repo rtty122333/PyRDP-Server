@@ -3,7 +3,8 @@
  */
 var mysql = require('mysql');
 var SQLSTR = require("./SQLStr.js");
-var config=require('./config')
+var config=require('./config');
+
 var options = {
   'host': '127.0.0.1',
   'port': '3306',
